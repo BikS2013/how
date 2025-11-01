@@ -82,6 +82,19 @@ node dist/index.js --provider claude --model claude-3-5-sonnet-20241022 how to c
 node dist/index.js --provider azure how to find large files
 ```
 
+### OS Prompt (Prompt-only)
+
+```bash
+# Generate prompt only (no model call)
+os-prompt "How to check disk space"
+
+# Structured JSON payload
+os-prompt --json "How to check disk space"
+
+# Single-line JSON
+os-prompt --format jsonl "How to check disk space"
+```
+
 ### Global Installation
 
 If you've linked the package globally:
@@ -304,6 +317,57 @@ how-ts --type how to create directory
 # Custom config file
 how-ts --config ./my-config.json how to search
 ```
+
+---
+
+## 🖥️ OS Prompt Tool
+
+`os-prompt` generates the same context-wrapped prompt used by How-CLI without calling any model. Perfect for tunneling into agents like Codex, Claude, etc.
+
+### Usage
+
+```bash
+# Plain prompt
+os-prompt "How to check disk space"
+
+# JSON payload (structured)
+os-prompt --json "How to check disk space"
+
+# Single-line JSON ({"prompt": "..."})
+os-prompt --format jsonl "How to check disk space"
+
+# Write to file
+os-prompt --out ./tmp/prompt.txt "How to check disk space"
+# Append JSONL records
+os-prompt --format jsonl --append --out ./tmp/prompts.jsonl "Q1"
+# Append with no trailing newline
+os-prompt --format jsonl --append --no-newline --out ./tmp/stream.jsonl "Q2"
+
+# Build context from another directory
+os-prompt --cwd ./src --format text "List files"
+
+# Override shell name
+os-prompt --shell bash --format text "List files"
+
+# Control success message stream
+os-prompt --out ./tmp/prompt.txt --quiet
+os-prompt --out ./tmp/prompt.txt --stdout "Q"
+os-prompt --out ./tmp/prompt.txt --stderr "Q"
+```
+
+### Options
+
+- `--files <n>` Number of files listed in context (default 20)
+- `--json` Output structured JSON payload
+- `--format <text|jsonl>` Output formats
+- `--out <file>` Write output to file
+- `--append` Append instead of overwrite
+- `--no-newline` No trailing newline on append
+- `--quiet` Suppress success message when writing to file
+- `--stdout` Print success messages to STDOUT
+- `--stderr` Print success messages to STDERR
+- `--cwd <path>` Context directory to use
+- `--shell <name>` Override shell in context
 
 ---
 

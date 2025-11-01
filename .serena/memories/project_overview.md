@@ -1,51 +1,66 @@
-# How-CLI Project Overview
+# Project Overview: How-CLI
 
-## Purpose
-How-CLI is a terminal-based assistant that generates precise shell commands for any task. It's powered by Google Gemini's generative AI and provides context-aware, executable shell commands tailored to the user's current environment.
+**Last Updated**: 2025-11-01  
+**Project Location**: `/Users/giorgosmarinos/aiwork/coding-platform/how`  
+**Programming Languages**: Python (original), TypeScript (enhanced port)
 
-## Key Features
-- Generates exact shell commands based on current working directory, OS, and available tools
-- Context-aware: considers files, git repositories, shell type, and installed tools
-- Command history logging for easy reference
-- Clipboard support: copies generated commands automatically
-- Optional typewriter effect for visually appealing output
-- Configurable Google Gemini API key
-- Graceful error handling (API errors, content blocks, timeouts)
+## Project Purpose
+
+How-CLI is a terminal-based assistant that generates precise, executable shell commands for any task using AI. It provides context-aware command generation by analyzing the user's current environment (OS, shell, working directory, files, git status, installed tools).
+
+## Key Implementations
+
+### 1. Python Version (`how/`)
+- **Package Name**: `how-cli-assist`
+- **Version**: 1.0.1
+- **Single Provider**: Google Gemini only
+- **Entry Point**: `how.main:main`
+- **CLI Command**: `how`
+
+**Features**:
+- Context-aware command generation
+- Command history logging
+- Clipboard auto-copy
+- Typewriter effect (optional)
+- Spinner animations
+- Error handling with retry logic
+- API key management
+
+### 2. TypeScript Version (`how-ts/`)
+- **Package Name**: `how-cli-ts`
+- **Version**: 1.0.0
+- **Multi-Provider Support**: Gemini, OpenAI, Azure OpenAI, Claude, Vertex AI Claude
+- **Entry Points**:
+  - `how-ts`: Main CLI command
+  - `os-prompt`: Context generation utility (no AI call)
+
+**Enhanced Features** (beyond Python version):
+- Multi-provider architecture with factory pattern
+- Type-safe implementation
+- Advanced configuration system (CLI → Env → Config file → Defaults)
+- Model name aliasing for Claude providers
+- Region selection for Vertex AI
+- Verbose mode for request debugging
+- Separate `os-prompt` utility for prompt generation
+
+## Current Status
+
+- ✅ Python version: Stable, production-ready
+- ✅ TypeScript version: Enhanced features, multi-provider support
+- ✅ Both versions actively maintained
+- ✅ Comprehensive documentation in README files
+
+## Target Users
+
+- Developers who need quick shell commands
+- System administrators managing servers
+- Users learning shell commands
+- DevOps engineers automating tasks
+- Anyone who wants context-aware command suggestions
 
 ## Project Philosophy
-This is intentionally a simple, fun weekend hack project - a Gemini API wrapper designed to make typing "how to do X in bash" more convenient and amusing. It's not meant to be a sophisticated LLM-based shell integration but rather a practical utility.
 
-## Tech Stack
-- **Language:** Python 3.8+
-- **Build System:** setuptools
-- **Key Dependencies:**
-  - `google-generativeai` - Google Gemini API client
-  - `pyperclip` - Clipboard functionality
-  - `psutil` - System and process utilities
-- **Packaging:** Distributed via PyPI as `how-cli-assist`
+As stated in the Python README disclaimer:
+> "I made How-CLI because it was fun and quick to build... It's not meant to change the world. It's meant to make typing 'how to do X in bash' a little more amusing... Think of it as a weekend hack."
 
-## Project Structure
-```
-how/
-├── how/
-│   ├── __init__.py          (empty module initialization)
-│   └── main.py              (main application logic)
-├── pyproject.toml           (project configuration and dependencies)
-├── setup.cfg                (metadata configuration)
-├── README.md                (documentation)
-├── LICENSE                  (MIT license)
-├── .gitignore               (git ignore rules)
-├── screenshot.png           (project screenshot)
-└── record.mp4               (demo video)
-```
-
-## Entry Point
-- **Console Script:** `how` command maps to `how.main:main`
-- **Installation:** `pip install how-cli-assist`
-- **Usage:** `how <question> [options]`
-
-## Version
-Current version: 1.0.1
-
-## License
-MIT License
+Despite this humble disclaimer, the project has evolved into a robust, multi-provider CLI tool with comprehensive features and type-safe implementation.

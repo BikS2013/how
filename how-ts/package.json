@@ -4,7 +4,8 @@
   "description": "Terminal assistant generating accurate shell commands (TypeScript version)",
   "main": "dist/index.js",
   "bin": {
-    "how-ts": "./dist/index.js"
+    "how-ts": "./dist/index.js",
+    "os-prompt": "./dist/os-prompt.js"
   },
   "scripts": {
     "build": "tsc",

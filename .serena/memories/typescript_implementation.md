@@ -1,16 +1,12 @@
-# TypeScript Implementation of How-CLI
+# TypeScript Implementation Details: How-CLI-TS
+
+**Last Updated**: 2025-11-01
 
 ## Overview
 
-A complete TypeScript/Node.js port of the How-CLI Python application has been created in the `how-ts/` directory. This implementation maintains full feature parity with the Python version while leveraging TypeScript's type safety and modern JavaScript ecosystem.
+The TypeScript version (`how-ts/`) is an enhanced, type-safe reimplementation of the Python How-CLI with multi-provider support. It maintains the core functionality while adding significant architectural improvements.
 
-## Project Location
-
-**Path:** `/Users/giorgosmarinos/aiwork/coding-platform/how/how-ts/`
-
-## Implementation Date
-
-November 1, 2025
+---
 
 ## Project Structure
 
@@ -18,252 +14,563 @@ November 1, 2025
 how-ts/
 ├── src/
 │   ├── config/
-│   │   └── index.ts          # Configuration constants (CONFIG_DIR, API_KEY_FILE, etc.)
-│   ├── errors/
-│   │   └── index.ts          # Custom error classes (ApiError, AuthError, etc.)
-│   ├── services/
-│   │   ├── api-key.ts        # API key management functions
-│   │   └── gemini.ts         # Google Gemini API integration
+│   │   ├── index.ts          # Configuration constants and environment variables
+│   │   └── config-loader.ts  # Configuration file loading and resolution logic
+│   ├── providers/
+│   │   ├── base.ts           # BaseProvider interface definition
+│   │   ├── gemini.ts         # Google Gemini implementation
+│   │   ├── openai.ts         # OpenAI implementation
+│   │   ├── azure-openai.ts   # Azure OpenAI implementation
+│   │   ├── claude.ts         # Anthropic Claude implementation
+│   │   ├── vertex-claude.ts  # Vertex AI Claude implementation
+│   │   ├── factory.ts        # Provider factory and utilities
+│   │   └── index.ts          # Provider exports
 │   ├── utils/
-│   │   ├── display.ts        # Display utilities (header, spinner, typewriter)
+│   │   ├── display.ts        # Display utilities (spinner, typewriter, etc.)
 │   │   ├── history.ts        # History logging and retrieval
 │   │   ├── system.ts         # System introspection (tools, terminal, files)
-│   │   └── text.ts           # Text processing (cleanResponse)
-│   └── index.ts              # Main CLI entry point
+│   │   └── text.ts           # Text processing utilities
+│   ├── errors/
+│   │   └── index.ts          # Custom error classes
+│   ├── index.ts              # Main CLI entry point
+│   └── os-prompt.ts          # Standalone prompt generator utility
 ├── dist/                     # Compiled JavaScript output
-│   └── index.js             # Main executable (chmod +x)
-├── package.json
-├── tsconfig.json
-├── .gitignore
-└── README.md
+├── package.json              # NPM package configuration
+├── tsconfig.json             # TypeScript compiler configuration
+└── README.md                 # Documentation
 ```
 
-## Tech Stack
+---
 
-### Core Dependencies
-- **@google/generative-ai** (^0.21.0) - Google Gemini API client
-- **clipboardy** (^4.0.0) - Cross-platform clipboard support
+## Provider Implementations
 
-### Development Dependencies
-- **typescript** (^5.6.0) - TypeScript compiler
-- **ts-node** (^10.9.2) - TypeScript executor for development
-- **@types/node** (^22.0.0) - Node.js type definitions
+### Base Provider Interface (`providers/base.ts`)
 
-### Runtime Requirements
-- **Node.js** >= 18.0.0
-
-## Key Files and Their Purposes
-
-### Configuration (`src/config/index.ts`)
-Defines all configuration constants:
-- `CONFIG_DIR`: `~/.how-cli`
-- `API_KEY_FILE`: `~/.how-cli/.google_api_key`
-- `HISTORY_FILE`: `~/.how-cli/history.log`
-- `MODEL_NAME`: From `HOW_MODEL` env var or default `models/gemini-2.5-flash-lite`
-- `TIMEOUT`: 30000ms (30 seconds)
-- `MAX_RETRIES`: 3
-
-### Error Classes (`src/errors/index.ts`)
-Custom error hierarchy:
-- `ApiError` - Base error class for API-related errors
-- `AuthError extends ApiError` - Authentication failures
-- `ContentError extends ApiError` - Content generation/blocking issues
-- `ApiTimeoutError extends ApiError` - API timeout errors
-
-All errors use `Object.setPrototypeOf()` to maintain proper prototype chain in TypeScript.
-
-### Services
-
-#### API Key Service (`src/services/api-key.ts`)
-**Functions:**
-- `getOrCreateApiKey(forceReenter: boolean): Promise<string>` - Retrieves or prompts for API key
-- `saveApiKey(apiKey: string): void` - Saves API key to file with 0o600 permissions
-
-**Logic:**
-1. Check `GOOGLE_API_KEY` environment variable
-2. Read from `~/.how-cli/.google_api_key` file
-3. Prompt user interactively using `readline`
-4. Save with secure permissions
-
-#### Gemini API Service (`src/services/gemini.ts`)
-**Functions:**
-- `generateResponse(apiKey: string, prompt: string, silent: boolean): Promise<string>`
-
-**Features:**
-- Retry logic with exponential backoff (max 3 retries)
-- 30-second timeout using `Promise.race`
-- Handles rate limiting (429 errors)
-- Handles content blocking
-- Spinner animation during API call (unless silent)
-
-### Utilities
-
-#### Display Utilities (`src/utils/display.ts`)
-- `header()` - Displays ASCII art banner
-- `spinner(message: string)` - Returns start/stop functions for animated spinner
-- `typewriterEffect(text: string, delay: number)` - Async typewriter animation
-
-**Implementation Notes:**
-- Spinner uses `setInterval` instead of threading
-- Typewriter uses async/await with `setTimeout`
-
-#### Text Utilities (`src/utils/text.ts`)
-- `cleanResponse(text: string): string` - Removes markdown code blocks from API response
-
-**Logic:**
-- Removes triple backticks (```)
-- Removes language identifiers
-- Removes single backticks (`)
-- Trims whitespace
-
-#### System Utilities (`src/utils/system.ts`)
-- `getInstalledTools(): string` - Detects installed CLI tools
-- `getCurrentTerminal(): string` - Identifies current shell/terminal
-- `getFilesList(directory: string, maxFiles: number): string` - Lists files in directory
-- `isGitRepository(directory: string): boolean` - Checks for .git directory
-
-**Implementation:**
-- Uses `execSync` with `which` (Unix) or `where` (Windows)
-- Reads `TERM_PROGRAM` and `SHELL` env vars
-- Falls back to `ps` command for parent process name
-
-#### History Utilities (`src/utils/history.ts`)
-- `logHistory(question: string, commands: string[]): void` - Appends to history file
-- `showHistory(): void` - Displays history file contents
-
-**Format:**
-```
-[YYYY-MM-DD HH:MM:SS] Q: <question>
-Commands:
-<command1>
-<command2>
-
+```typescript
+export interface BaseProvider {
+  readonly name: string;
+  generateResponse(prompt: string, silent: boolean, verbose?: boolean): Promise<string>;
+  validateConfig(): void;
+}
 ```
 
-### Main Entry Point (`src/index.ts`)
+**Key Points**:
+- All providers must implement this interface
+- `generateResponse()` is async and returns Promise<string>
+- `validateConfig()` throws errors if configuration is invalid
+- `verbose` parameter for debugging requests
 
-**Features:**
-- Shebang: `#!/usr/bin/env node`
-- Async main function
-- Command-line argument parsing
-- System context gathering
-- Prompt construction
-- API call orchestration
-- Output display (normal or typewriter)
-- Clipboard copy
-- History logging
-- Comprehensive error handling
+### Provider Factory (`providers/factory.ts`)
 
-**Error Handling:**
-- Graceful SIGINT (Ctrl+C) handling
-- Missing dependency detection
-- Typed error catching
-- Debug mode support via `DEBUG` env var
+**Functions**:
+1. `createProvider(config: ResolvedConfig): BaseProvider`
+   - Switch-case based on `config.provider`
+   - Instantiates appropriate provider class
+   - Returns BaseProvider instance
 
-## Build Process
+2. `getSupportedProviders(): AIProvider[]`
+   - Returns array of supported provider names
 
-### Commands
-```bash
-npm install          # Install dependencies
-npm run build        # Compile TypeScript to dist/
-npm run clean        # Remove dist/ directory
-npm run dev          # Run with ts-node (development)
-npm run start        # Run compiled version
+3. `getProviderName(provider: AIProvider): string`
+   - Maps provider ID to display name
+
+4. `isValidProvider(provider: string): boolean`
+   - Type guard for provider validation
+
+### Individual Providers
+
+#### 1. GeminiProvider (`providers/gemini.ts`)
+
+**Configuration**:
+- API Key: Required
+- Model: Default `models/gemini-2.5-flash-lite`
+
+**SDK**: `@google/generative-ai`
+
+**Key Features**:
+- Retry logic with exponential backoff
+- Rate limit handling (429 errors)
+- Content filtering detection
+- Timeout handling (30s default)
+
+#### 2. OpenAIProvider (`providers/openai.ts`)
+
+**Configuration**:
+- API Key: Required
+- Model: Default `gpt-4o-mini`
+- Organization: Optional
+
+**SDK**: `openai` (v4.70.0+)
+
+**Key Features**:
+- Chat completions API
+- Streaming support (likely)
+- Error handling for API errors
+
+#### 3. AzureOpenAIProvider (`providers/azure-openai.ts`)
+
+**Configuration**:
+- API Key: Required
+- Endpoint: Required (e.g., `https://your-resource.openai.azure.com`)
+- API Version: Default `2024-02-15-preview`
+- Deployment: Required (deployment name, not model name)
+
+**SDK**: `openai` (configured for Azure)
+
+**Key Differences from OpenAI**:
+- Uses deployment name instead of model name
+- Requires endpoint URL
+- Different authentication mechanism
+
+#### 4. ClaudeProvider (`providers/claude.ts`)
+
+**Configuration**:
+- API Key: Required
+- Model: Default `claude-3-5-sonnet-20241022`
+
+**SDK**: `@anthropic-ai/sdk` (v0.32.0+)
+
+**Key Features**:
+- Messages API
+- Model name expansion (short names → full IDs)
+- Support for latest Claude models
+
+#### 5. VertexClaudeProvider (`providers/vertex-claude.ts`)
+
+**Configuration**:
+- Project ID: Required (GCP project)
+- Location: Default `us-central1`
+- Model: Default `claude-3-5-sonnet@20241022`
+
+**SDK**: `@google-cloud/vertexai` (v1.9.0+)
+
+**Authentication**: Google Application Default Credentials (ADC)
+
+**Key Features**:
+- Claude via Google Cloud
+- Region selection
+- Model format with `@` date version
+- Short name expansion with date auto-addition
+- Automatic retry with `--region global` if regional model unavailable
+
+**Model Format**: `claude-<model>-<version>@YYYYMMDD`
+- Example: `claude-sonnet-4-5@20250929`
+
+---
+
+## Configuration System
+
+### Configuration Hierarchy (`config/config-loader.ts`)
+
+**Resolution Order** (Highest → Lowest Priority):
+1. **CLI Arguments**: `--provider`, `--model`, `--region`
+2. **Environment Variables**: `AI_PROVIDER`, `OPENAI_API_KEY`, etc.
+3. **Config File**: `~/.how-cli/config.json`
+4. **Built-in Defaults**: Hardcoded fallbacks
+
+### resolveConfig() Function
+
+**Location**: `config/config-loader.ts:110-187`
+
+**Process**:
+1. Load config file (if exists)
+2. For each provider, merge:
+   - CLI args (if provided)
+   - Environment variables
+   - Config file values
+   - Defaults
+3. Apply model name expansion for Claude providers
+4. Return `ResolvedConfig` object
+
+### Model Name Expansion
+
+**Claude Provider** (`expandClaudeModel()` at line 157):
+```typescript
+'sonnet-4-5' → 'claude-sonnet-4-5'
+'haiku-4-5' → 'claude-haiku-4-5'
+'opus-4-1' → 'claude-opus-4-1'
 ```
+
+**Vertex Claude Provider** (`expandVertexClaudeModel()` at line 169):
+```typescript
+'sonnet-4-5' → 'claude-sonnet-4-5@20250929'
+'haiku-4-5' → 'claude-haiku-4-5@20251001'
+'opus-4-1' → 'claude-opus-4-1@20250805'
+```
+
+**When Expansion Happens**: During `resolveConfig()`, lines 183-184
+
+---
+
+## System Utilities (`utils/system.ts`)
+
+### Functions
+
+#### 1. `getInstalledTools(): string`
+**Purpose**: Detect installed development tools
+
+**Tools Checked**:
+```typescript
+['git', 'npm', 'node', 'python', 'docker', 'pip',
+ 'go', 'rustc', 'cargo', 'java', 'mvn', 'gradle']
+```
+
+**Implementation**:
+- Uses `which` on Unix/macOS
+- Uses `where` on Windows
+- Executes via `execSync` from `child_process`
+- Returns comma-separated list of found tools
+
+#### 2. `getCurrentTerminal(): string`
+**Purpose**: Identify the current terminal/shell
+
+**Detection Strategy**:
+1. Check `TERM_PROGRAM` env var (e.g., "iTerm.app", "vscode")
+2. Check `SHELL` env var, extract basename
+3. (Unix only) Execute `ps -p ${ppid} -o comm=` to get parent process name
+4. Fallback: "Unknown"
+
+#### 3. `getFilesList(directory: string, maxFiles: number = 20): string`
+**Purpose**: List files in current directory for context
+
+**Returns**: Comma-separated file list, with "..." if exceeds `maxFiles`
+
+#### 4. `isGitRepository(directory: string): boolean`
+**Purpose**: Check if directory is a git repository
+
+**Implementation**: Check existence of `.git` subdirectory
+
+---
+
+## OS Prompt Utility (`os-prompt.ts`)
+
+### Purpose
+Generate the same context-wrapped prompt used by How-CLI without calling any AI model.
+
+### Use Cases
+1. **Tunneling to other AI systems**: Send prompt to Claude, ChatGPT, etc.
+2. **Dataset generation**: Collect prompts for fine-tuning
+3. **Debugging**: Inspect exact prompt sent to models
+4. **Integration**: Use with custom agents or workflows
+
+### CLI Flags
+
+**Basic**:
+- `--files <n>`: Number of files to list (default 20)
+
+**Output Format**:
+- (default): Plain text prompt
+- `--json`: Structured JSON payload
+- `--format jsonl`: Single-line JSON
+
+**File Writing**:
+- `--out <file>`: Write to file instead of stdout
+- `--append`: Append to file (vs. overwrite)
+- `--no-newline`: No trailing newline on append
+
+**Context Overrides**:
+- `--cwd <path>`: Use different directory for context
+- `--shell <name>`: Override shell name in context
+
+**Output Control**:
+- `--quiet`: Suppress success messages
+- `--stdout`: Print success to stdout
+- `--stderr`: Print success to stderr (default)
+
+### Output Formats
+
+#### Text (Default)
+```
+SYSTEM:
+You are an expert, concise shell assistant...
+
+CONTEXT:
+- OS: Darwin 25.0.0
+- Shell: zsh
+- CWD: /Users/...
+...
+
+REQUEST:
+How to check disk space
+
+RESPONSE:
+```
+
+#### JSON (`--json`)
+```json
+{
+  "prompt": "SYSTEM:\nYou are an expert...",
+  "context": {
+    "os": "Darwin 25.0.0",
+    "shell": "zsh",
+    "cwd": "/Users/...",
+    ...
+  },
+  "question": "How to check disk space"
+}
+```
+
+#### JSONL (`--format jsonl`)
+```json
+{"prompt":"SYSTEM:\nYou are...","context":{...},"question":"How to check disk space"}
+```
+
+### Implementation Notes
+- Shares context-building logic with main CLI
+- No AI provider initialization
+- Fast execution (no API calls)
+- Can be used in pipelines: `os-prompt "..." | curl ...`
+
+---
+
+## Entry Points
+
+### Main CLI (`index.ts`)
+
+**Binary**: `how-ts` (defined in `package.json` bin field)
+
+**Flow**:
+1. Parse CLI arguments
+   - Extract `--provider`, `--model`, `--region`, `--config`, etc.
+   - Extract question from remaining args
+2. Resolve configuration
+   - Call `resolveConfig()` with CLI overrides
+3. Create provider
+   - Call `createProvider(config)`
+4. Validate provider
+   - Call `provider.validateConfig()`
+5. Build context
+   - Gather OS, shell, CWD, files, git status, tools
+   - Construct prompt with context and rules
+6. Generate response
+   - Call `provider.generateResponse(prompt, silent, verbose)`
+   - Show spinner if not silent
+7. Display & save
+   - Clean response (strip markdown)
+   - Display (with typewriter if `--type`)
+   - Copy to clipboard
+   - Log to history
+8. Error handling
+   - Catch and display user-friendly errors
+   - Exit with appropriate code
+
+**Verbose Mode** (`--verbose`):
+- Prints full request payload before API call
+- Shows provider name, model, and prompt
+- Useful for debugging
+
+### OS Prompt (`os-prompt.ts`)
+
+**Binary**: `os-prompt` (defined in `package.json` bin field)
+
+**Flow**:
+1. Parse CLI arguments
+   - Extract output format, file path, context overrides
+2. Build context
+   - Same logic as main CLI
+3. Construct prompt
+   - Identical prompt template
+4. Output
+   - Format based on flags (text/JSON/JSONL)
+   - Write to file or stdout
+5. Success message
+   - Print to stderr/stdout/quiet based on flags
+
+---
+
+## Build System
 
 ### TypeScript Configuration (`tsconfig.json`)
-- **target**: ES2020
-- **module**: CommonJS
-- **strict**: true
-- **outDir**: ./dist
-- **rootDir**: ./src
-- **sourceMap**: true
-- **declaration**: true
 
-### Build Output
-- Compiled JavaScript in `dist/` directory
-- Source maps (.js.map)
-- Type declarations (.d.ts)
-- Declaration maps (.d.ts.map)
-
-## Usage
-
-```bash
-# Help
-node dist/index.js --help
-
-# Ask question
-node dist/index.js how to list all files
-
-# History
-node dist/index.js --history
-
-# Set API key
-node dist/index.js --api-key YOUR_KEY
-
-# Silent mode
-node dist/index.js --silent how to check disk space
-
-# Typewriter effect
-node dist/index.js --type how to create a git repo
+**Expected Settings**:
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",          // Modern JavaScript features
+    "module": "commonjs",        // Node.js compatibility
+    "outDir": "./dist",          // Compiled output
+    "rootDir": "./src",          // Source directory
+    "strict": true,              // Full type safety
+    "esModuleInterop": true,     // Import compatibility
+    "skipLibCheck": true,        // Faster compilation
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
 ```
 
-## Testing Results
+### NPM Scripts (`package.json`)
 
-✅ **Compilation:** Successful with no TypeScript errors
-✅ **Help Command:** Displays correct usage and options
-✅ **History Command:** Shows "No history found" (expected for fresh install)
-✅ **File Permissions:** dist/index.js set to executable (chmod +x)
-✅ **Module Resolution:** All imports resolve correctly
-✅ **Type Safety:** Full type checking throughout codebase
+```json
+{
+  "scripts": {
+    "build": "tsc",                    // Compile TS → JS
+    "dev": "ts-node src/index.ts",     // Run without compilation
+    "start": "node dist/index.js",     // Run compiled version
+    "clean": "rm -rf dist"             // Remove build artifacts
+  }
+}
+```
 
-## Comparison with Python Version
+### Build Process
+1. `npm run build`
+   - TypeScript compiler reads `tsconfig.json`
+   - Compiles all `.ts` files in `src/`
+   - Outputs `.js` files to `dist/`
+   - Preserves directory structure
+2. Output is executable via:
+   - `node dist/index.js` (direct)
+   - `npm start` (via script)
+   - `how-ts` (if globally linked with `npm link`)
 
-### Maintained Features (100% Parity)
-- ✅ All command-line flags (--help, --history, --api-key, --silent, --type)
-- ✅ API key management (env var, file, interactive prompt)
-- ✅ System context gathering (OS, shell, files, git, tools)
-- ✅ Gemini API integration with retry logic
-- ✅ History logging (same format)
-- ✅ Clipboard support
-- ✅ Spinner animation
-- ✅ Typewriter effect
-- ✅ Error handling (custom exceptions)
-- ✅ Same prompt structure
-- ✅ Secure file permissions (0o600)
+---
 
-### Improvements
-- ✅ **Type Safety:** Full TypeScript type checking
-- ✅ **Module Organization:** Clean separation of concerns
-- ✅ **Async/Await:** Modern async patterns
-- ✅ **Better Error Types:** Strongly typed error classes
-- ✅ **Documentation:** Comprehensive JSDoc comments
+## Key TypeScript Features Used
 
-### Technical Differences
-- **Threading → Intervals:** `setInterval` instead of `threading.Thread`
-- **psutil → execSync:** Uses `which`/`ps` commands instead of psutil library
-- **pyperclip → clipboardy:** Different clipboard library
-- **input() → readline:** Node.js readline for user input
-- **Synchronous I/O:** Some file operations use sync methods for simplicity
-  (can be converted to async if needed)
+### 1. Union Types
+```typescript
+export type AIProvider = 'gemini' | 'openai' | 'azure' | 'claude' | 'vertex-claude';
+```
 
-## Known Limitations
+### 2. Type Guards
+```typescript
+function isValidProvider(provider: string): provider is AIProvider {
+  return getSupportedProviders().includes(provider as AIProvider);
+}
+```
 
-1. **No Global Install (yet):** Not published to npm, requires manual build
-2. **Clipboard Dependency:** Requires native clipboard support (may fail in some environments)
-3. **Process Introspection:** Terminal detection less robust than Python's psutil
+### 3. Readonly Properties
+```typescript
+export interface BaseProvider {
+  readonly name: string;  // Cannot be modified after creation
+}
+```
 
-## Future Enhancements
+### 4. Optional Parameters
+```typescript
+generateResponse(prompt: string, silent: boolean, verbose?: boolean): Promise<string>
+```
 
-Potential improvements:
-- Publish to npm registry
-- Add ESLint/Prettier configuration
-- Add Jest for unit testing
-- Add CI/CD pipeline
-- Support ESM modules (currently CommonJS)
-- Add interactive mode with prompts
-- Add shell completion scripts
+### 5. Async/Await
+```typescript
+async generateResponse(prompt: string, silent: boolean): Promise<string> {
+  const response = await this.client.messages.create({ ... });
+  return response.content[0].text;
+}
+```
 
-## Memory File Updates
+### 6. Interfaces for Configuration
+```typescript
+export interface ResolvedConfig {
+  provider: AIProvider;
+  gemini: { apiKey: string; model: string; };
+  openai: { apiKey: string; model: string; organization: string; };
+  // ...
+}
+```
 
-This memory file documents the TypeScript implementation. Other memory files remain accurate for the Python implementation. The two versions coexist independently in the same repository.
+### 7. Record Types
+```typescript
+export const PROVIDER_NAMES: Record<AIProvider, string> = {
+  gemini: 'Google Gemini',
+  openai: 'OpenAI',
+  // ...
+};
+```
+
+---
+
+## Advantages Over Python Version
+
+### 1. Type Safety
+- Compile-time error detection
+- IDE autocomplete and refactoring
+- Self-documenting code via types
+
+### 2. Multi-Provider Architecture
+- Easy to add new providers
+- Provider-specific logic isolated
+- Consistent interface across providers
+
+### 3. Advanced Configuration
+- Hierarchical config resolution
+- File-based configuration
+- CLI overrides
+
+### 4. Modularity
+- Separation of concerns
+- Reusable utilities
+- Testable components
+
+### 5. Model Name Aliasing
+- User-friendly short names
+- Consistent UX across providers
+- Automatic version resolution
+
+### 6. Verbose Mode
+- Debug request payloads
+- Troubleshoot API issues
+- Understand prompt construction
+
+### 7. OS Prompt Utility
+- Prompt generation without AI calls
+- Integration with other tools
+- Dataset creation
+
+---
+
+## Future Enhancement Areas
+
+### 1. Testing
+- Add Jest or Vitest
+- Unit tests for providers
+- Integration tests for CLI
+
+### 2. Additional Providers
+- Cohere
+- Mistral AI
+- Local models (Ollama, LLaMA.cpp)
+
+### 3. Advanced Features
+- Streaming responses
+- Multi-turn conversations
+- Command explanations
+- Safety confirmations for destructive commands
+
+### 4. Configuration UI
+- Interactive setup wizard
+- Config validation command
+- List available models per provider
+
+### 5. Improved Error Messages
+- Suggest fixes for common errors
+- Link to documentation
+- Provider-specific troubleshooting
+
+---
+
+## Migration Notes (Python → TypeScript)
+
+### What Changed
+- **Architecture**: Monolithic → Modular
+- **Providers**: Single (Gemini) → Multi (5 providers)
+- **Configuration**: Simple → Hierarchical
+- **Type System**: Dynamic → Static
+- **Async**: Threading → async/await
+
+### What Stayed the Same
+- **Core Concept**: Context-aware command generation
+- **Prompt Structure**: Identical system prompt and rules
+- **User Experience**: Same CLI flags and behavior
+- **Output**: Minimal, command-only responses
+
+### Breaking Changes
+- CLI binary name: `how` → `how-ts`
+- Config file: New JSON format (Python had only API key file)
+- Provider selection: New `--provider` flag required for non-Gemini
+
+### Backward Compatibility
+- Environment variable `GOOGLE_API_KEY` still works
+- History file location unchanged (`~/.how-cli/history.log`)
+- Similar CLI flags (`--silent`, `--type`, `--history`)
