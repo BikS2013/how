@@ -30,7 +30,7 @@
 | **OpenAI** | gpt-4o, gpt-4o-mini, gpt-3.5-turbo | `OPENAI_API_KEY` |
 | **Azure OpenAI** | gpt-4, gpt-3.5-turbo (via Azure) | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
 | **Anthropic Claude** | claude-3-5-sonnet, etc. | `ANTHROPIC_API_KEY` |
-| **Vertex AI Claude** | claude via Google Vertex AI | `VERTEX_PROJECT_ID`, `VERTEX_LOCATION` |
+| **Vertex AI Claude** | claude via Google Vertex AI | `ANTHROPIC_VERTEX_PROJECT_ID`, `VERTEX_LOCATION` |
 
 ---
 
@@ -136,9 +136,21 @@ export CLAUDE_MODEL=claude-3-5-sonnet-20241022  # optional
 
 #### Vertex AI Claude
 ```bash
-export VERTEX_PROJECT_ID=your-gcp-project
-export VERTEX_LOCATION=us-east5  # optional
-export VERTEX_CLAUDE_MODEL=claude-3-5-sonnet@20241022  # optional
+export ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project
+export CLOUD_ML_REGION=us-central1  # Recommended: CLOUD_ML_REGION
+# or
+export VERTEX_LOCATION=us-central1  # Alternative: VERTEX_LOCATION
+
+export VERTEX_CLAUDE_MODEL=claude-3-5-sonnet@20241022  # optional, use @ format
+
+# Note: Vertex AI requires @ symbol with date version
+# Valid examples:
+#   claude-sonnet-4-5@20250929
+#   claude-haiku-4-5@20251001
+#   claude-opus-4-1@20250805
+#   claude-3-5-sonnet@20241022
+
+# Common regions: us-central1, us-east1, us-west1, europe-west1, asia-southeast1
 ```
 
 ### Config File
@@ -172,9 +184,11 @@ Create `~/.how-cli/config.json`:
 Options:
   --provider <name>    AI provider: gemini, openai, azure, claude, vertex-claude
   --model <name>       Model name for the selected provider
+  --region <name>      Region for Vertex AI Claude (e.g., us-central1, us-east1)
   --config <path>      Path to config file (default: ~/.how-cli/config.json)
   --silent             Suppress spinner and typewriter effect
   --type               Show output with typewriter effect
+  --verbose            Print the complete request sent to the model
   --history            Show command/question history
   --help               Show this help message and exit
 ```
@@ -202,7 +216,11 @@ how-ts --provider claude how to count lines in a file
 how-ts --provider azure how to compress a folder
 > tar -czf folder.tar.gz folder/
 
-# Vertex AI Claude
+# Vertex AI Claude (with region)
+how-ts --provider vertex-claude --region us-east1 how to check memory usage
+> free -h
+
+# Vertex AI Claude (default region: us-central1)
 how-ts --provider vertex-claude how to check memory usage
 > free -h
 ```

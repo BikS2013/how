@@ -26,6 +26,7 @@ async function main(): Promise<void> {
     console.log('\nOptions:');
     console.log('  --provider <name>    AI provider: ' + getSupportedProviders().join(', '));
     console.log('  --model <name>       Model name for the selected provider');
+    console.log('  --region <name>      Region for Vertex AI Claude (e.g., us-central1, us-east1)');
     console.log('  --config <path>      Path to config file (default: ~/.how-cli/config.json)');
     console.log('  --silent             Suppress spinner and typewriter effect');
     console.log('  --type               Show output with typewriter effect');
@@ -41,8 +42,8 @@ async function main(): Promise<void> {
     console.log('  AZURE_OPENAI_ENDPOINT       - Azure OpenAI endpoint');
     console.log('  AZURE_OPENAI_API_VERSION    - Azure OpenAI API version');
     console.log('  AZURE_OPENAI_DEPLOYMENT     - Azure OpenAI deployment name');
-    console.log('  VERTEX_PROJECT_ID           - Google Cloud project ID for Vertex AI');
-    console.log('  VERTEX_LOCATION             - Vertex AI location');
+    console.log('  ANTHROPIC_VERTEX_PROJECT_ID - Google Cloud project ID for Vertex AI Claude');
+    console.log('  CLOUD_ML_REGION             - Vertex AI region (alternative: VERTEX_LOCATION)');
     console.log('\nExamples:');
     console.log('  how-ts to list all files');
     console.log('  how-ts --provider openai to create a git repository');
@@ -64,6 +65,7 @@ async function main(): Promise<void> {
   // Parse provider and model flags
   let cliProvider: AIProvider | undefined;
   let cliModel: string | undefined;
+  let cliRegion: string | undefined;
   let configPath: string | undefined;
 
   if (args.includes('--provider')) {
@@ -86,6 +88,13 @@ async function main(): Promise<void> {
     }
   }
 
+  if (args.includes('--region')) {
+    const idx = args.indexOf('--region');
+    if (args.length > idx + 1) {
+      cliRegion = args[idx + 1].trim();
+    }
+  }
+
   if (args.includes('--config')) {
     const idx = args.indexOf('--config');
     if (args.length > idx + 1) {
@@ -94,14 +103,14 @@ async function main(): Promise<void> {
   }
 
   // Filter out flags to get the actual question
-  const flagsToRemove = ['--silent', '--history', '--type', '--verbose', '--provider', '--model', '--config', '--help'];
+  const flagsToRemove = ['--silent', '--history', '--type', '--verbose', '--provider', '--model', '--region', '--config', '--help'];
   const questionArgs = args.filter((arg, index) => {
     // Remove flags
     if (flagsToRemove.includes(arg)) return false;
 
     // Remove flag values (arguments after flags)
     const prevArg = args[index - 1];
-    if (prevArg && (prevArg === '--provider' || prevArg === '--model' || prevArg === '--config')) {
+    if (prevArg && (prevArg === '--provider' || prevArg === '--model' || prevArg === '--region' || prevArg === '--config')) {
       return false;
     }
 
@@ -118,7 +127,7 @@ async function main(): Promise<void> {
   // Resolve configuration (CLI args > env vars > config file > defaults)
   let config;
   try {
-    config = resolveConfig(cliProvider, cliModel, configPath);
+    config = resolveConfig(cliProvider, cliModel, cliRegion, configPath);
   } catch (error) {
     console.error(`❌ Configuration Error: ${error instanceof Error ? error.message : error}`);
     process.exit(1);

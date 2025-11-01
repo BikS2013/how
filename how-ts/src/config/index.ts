@@ -52,8 +52,8 @@ export const PROVIDER_CONFIG = {
 
   // Vertex AI Claude
   vertexClaude: {
-    projectId: process.env.VERTEX_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || '',
-    location: process.env.VERTEX_LOCATION || 'us-east5',
+    projectId: process.env.ANTHROPIC_VERTEX_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || '',
+    location: process.env.CLOUD_ML_REGION || process.env.VERTEX_LOCATION || 'us-central1',
     model: process.env.VERTEX_CLAUDE_MODEL || 'claude-3-5-sonnet@20241022',
   },
 };

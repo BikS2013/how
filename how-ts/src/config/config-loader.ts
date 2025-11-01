@@ -110,6 +110,7 @@ export function saveConfigFile(config: ProviderConfig, configPath?: string): voi
 export function resolveConfig(
   cliProvider?: AIProvider,
   cliModel?: string,
+  cliRegion?: string,
   configFilePath?: string
 ): ResolvedConfig {
   // Load config file
@@ -147,7 +148,7 @@ export function resolveConfig(
 
     vertexClaude: {
       projectId: PROVIDER_CONFIG.vertexClaude.projectId || fileConfig?.vertexClaude?.projectId || '',
-      location: PROVIDER_CONFIG.vertexClaude.location || fileConfig?.vertexClaude?.location || 'us-east5',
+      location: cliRegion || PROVIDER_CONFIG.vertexClaude.location || fileConfig?.vertexClaude?.location || 'us-central1',
       model: cliModel || PROVIDER_CONFIG.vertexClaude.model || fileConfig?.vertexClaude?.model || 'claude-3-5-sonnet@20241022',
     },
   };

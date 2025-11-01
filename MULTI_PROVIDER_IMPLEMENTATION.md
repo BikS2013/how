@@ -19,7 +19,7 @@ The How-CLI TypeScript version now supports **5 different AI providers**, making
 | 2 | **OpenAI** | ✅ Implemented | `OPENAI_API_KEY` | gpt-4o, gpt-4o-mini, gpt-3.5-turbo |
 | 3 | **Azure OpenAI** | ✅ Implemented | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT` | gpt-4, gpt-3.5-turbo (via Azure) |
 | 4 | **Anthropic Claude** | ✅ Implemented | `ANTHROPIC_API_KEY` | claude-3-5-sonnet-20241022 |
-| 5 | **Vertex AI Claude** | ✅ Implemented | `VERTEX_PROJECT_ID`, `VERTEX_LOCATION` | claude-3-5-sonnet@20241022 |
+| 5 | **Vertex AI Claude** | ✅ Implemented | `ANTHROPIC_VERTEX_PROJECT_ID`, `VERTEX_LOCATION` | claude-3-5-sonnet@20241022 |
 
 ---
 
@@ -99,7 +99,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 CLAUDE_MODEL=claude-3-5-sonnet-20241022
 
 # Vertex AI Claude
-VERTEX_PROJECT_ID=your-gcp-project
+ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project
 GOOGLE_CLOUD_PROJECT=your-gcp-project  # Alternative
 VERTEX_LOCATION=us-east5
 VERTEX_CLAUDE_MODEL=claude-3-5-sonnet@20241022
