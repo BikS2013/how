@@ -22,6 +22,9 @@ export class ClaudeProvider implements BaseProvider {
     if (!this.apiKey) {
       throw new Error('Anthropic API key is required. Set ANTHROPIC_API_KEY environment variable.');
     }
+
+    // Auto-expand short model names (e.g., sonnet-4-5 → claude-sonnet-4-5)
+    this.model = this.expandShortModel(this.model);
   }
 
   async generateResponse(prompt: string, silent: boolean = false, verbose: boolean = false): Promise<string> {
@@ -146,5 +149,30 @@ export class ClaudeProvider implements BaseProvider {
 
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Expand short Anthropic model names to full IDs for the Claude provider.
+   * Examples:
+   *  - sonnet-4-5 → claude-sonnet-4-5
+   *  - haiku-4-5  → claude-haiku-4-5
+   *  - opus-4-1   → claude-opus-4-1
+   */
+  private expandShortModel(model: string): string {
+    const map: Record<string, string> = {
+      'sonnet-4-5': 'claude-sonnet-4-5',
+      'haiku-4-5': 'claude-haiku-4-5',
+      'opus-4-1': 'claude-opus-4-1',
+      // Optional older mappings for convenience
+      'sonnet-3-5': 'claude-3-5-sonnet-20241022',
+      'haiku-3-5': 'claude-3-5-haiku-20241022',
+    };
+
+    // If already looks complete, return as is
+    if (model.startsWith('claude-')) {
+      return model;
+    }
+
+    return map[model] || model;
   }
 }

@@ -32,6 +32,8 @@
 | **Anthropic Claude** | claude-3-5-sonnet, etc. | `ANTHROPIC_API_KEY` |
 | **Vertex AI Claude** | claude via Google Vertex AI | `ANTHROPIC_VERTEX_PROJECT_ID`, `VERTEX_LOCATION` |
 
+Tip: Claude providers support short model names (e.g., `sonnet-4-5`, `haiku-4-5`, `opus-4-1`) which auto-expand to full IDs.
+
 ---
 
 ## 📦 Installation
@@ -153,6 +155,19 @@ export VERTEX_CLAUDE_MODEL=claude-3-5-sonnet@20241022  # optional, use @ format
 # Common regions: us-central1, us-east1, us-west1, europe-west1, asia-southeast1
 ```
 
+#### Short Names (Environment Variables)
+You can set short model names in environment variables; the CLI expands them automatically:
+
+- `CLAUDE_MODEL=sonnet-4-5` → `claude-sonnet-4-5`
+- `VERTEX_CLAUDE_MODEL=haiku-4-5` → `claude-haiku-4-5@20251001`
+- `VERTEX_CLAUDE_MODEL=opus-4-1` → `claude-opus-4-1@20250805`
+
+Example:
+```bash
+export CLAUDE_MODEL=sonnet-4-5
+export VERTEX_CLAUDE_MODEL=opus-4-1
+```
+
 ### Config File
 
 Create `~/.how-cli/config.json`:
@@ -175,6 +190,41 @@ Create `~/.how-cli/config.json`:
   }
 }
 ```
+
+---
+
+## 🧩 Model Short Names
+
+You can use short model names for Claude providers. The CLI expands them automatically:
+
+- sonnet-4-5
+  - Claude: claude-sonnet-4-5
+  - Vertex Claude: claude-sonnet-4-5@20250929
+- haiku-4-5
+  - Claude: claude-haiku-4-5
+  - Vertex Claude: claude-haiku-4-5@20251001
+- opus-4-1
+  - Claude: claude-opus-4-1
+  - Vertex Claude: claude-opus-4-1@20250805
+
+Examples:
+
+```bash
+# Short name with Claude (Anthropic)
+how-ts --provider claude --model sonnet-4-5 how to list files
+
+# Short name with Vertex Claude (date auto-added)
+how-ts --provider vertex-claude --region us-east1 --model haiku-4-5 "How to create a folder"
+```
+
+Config and environment variables also accept short names:
+
+```bash
+export CLAUDE_MODEL=sonnet-4-5
+export VERTEX_CLAUDE_MODEL=opus-4-1
+```
+
+Note: Vertex AI prefers explicit @YYYYMMDD versions for reproducibility. Short names are expanded to recommended versions.
 
 ---
 
@@ -233,6 +283,10 @@ how-ts --provider openai --model gpt-4o how to optimize this script
 
 # Specific Claude model
 how-ts --provider claude --model claude-3-5-sonnet-20241022 how to debug
+
+# Short names (auto-expanded)
+how-ts --provider claude --model sonnet-4-5 how to debug
+how-ts --provider vertex-claude --model haiku-4-5 --region us-east1 how to debug
 
 # Azure deployment
 how-ts --provider azure --model my-gpt4-deployment how to deploy
@@ -351,6 +405,10 @@ npm run dev -- --provider openai how to list files
 - Claude via Google Cloud
 - Requires GCP project
 - Region-specific availability
+
+Additional notes:
+- Supports short model names (e.g., sonnet-4-5) which auto-expand to full Vertex IDs with date version.
+- If a model isn’t available in the specified region, the tool automatically retries once with --region global.
 
 ---
 

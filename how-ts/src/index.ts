@@ -44,10 +44,13 @@ async function main(): Promise<void> {
     console.log('  AZURE_OPENAI_DEPLOYMENT     - Azure OpenAI deployment name');
     console.log('  ANTHROPIC_VERTEX_PROJECT_ID - Google Cloud project ID for Vertex AI Claude');
     console.log('  CLOUD_ML_REGION             - Vertex AI region (alternative: VERTEX_LOCATION)');
+    console.log('\nTip: Claude providers support short model names (e.g., sonnet-4-5, haiku-4-5, opus-4-1). Short names auto-expand; Vertex adds @YYYYMMDD.');
     console.log('\nExamples:');
-    console.log('  how-ts to list all files');
-    console.log('  how-ts --provider openai to create a git repository');
-    console.log('  how-ts --provider claude --model claude-3-5-sonnet-20241022 to check disk usage');
+    console.log('  how-ts how to list all files');
+    console.log('  how-ts --provider openai how to create a git repository');
+    console.log('  how-ts --provider claude --model claude-3-5-sonnet-20241022 how to check disk usage');
+    console.log('  how-ts --provider claude --model sonnet-4-5 how to check disk usage  # short name');
+    console.log('  how-ts --provider vertex-claude --region us-east1 --model haiku-4-5 "How to create a folder"  # short name with Vertex');
     process.exit(0);
   }
 

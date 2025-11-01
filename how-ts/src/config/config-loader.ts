@@ -153,5 +153,35 @@ export function resolveConfig(
     },
   };
 
+  // Auto-expand short model names for Claude providers to improve UX
+  const expandClaudeModel = (model: string): string => {
+    const map: Record<string, string> = {
+      'sonnet-4-5': 'claude-sonnet-4-5',
+      'haiku-4-5': 'claude-haiku-4-5',
+      'opus-4-1': 'claude-opus-4-1',
+      'sonnet-3-5': 'claude-3-5-sonnet-20241022',
+      'haiku-3-5': 'claude-3-5-haiku-20241022',
+    };
+    if (model.startsWith('claude-')) return model;
+    return map[model] || model;
+  };
+
+  const expandVertexClaudeModel = (model: string): string => {
+    const map: Record<string, string> = {
+      'sonnet-4-5': 'claude-sonnet-4-5@20250929',
+      'haiku-4-5': 'claude-haiku-4-5@20251001',
+      'opus-4-1': 'claude-opus-4-1@20250805',
+      'claude-sonnet-4-5': 'claude-sonnet-4-5@20250929',
+      'claude-haiku-4-5': 'claude-haiku-4-5@20251001',
+      'claude-opus-4-1': 'claude-opus-4-1@20250805',
+    };
+    if (model.includes('@')) return model;
+    return map[model] || model;
+  };
+
+  // Apply expansions so verbose output reflects final models
+  config.claude.model = expandClaudeModel(config.claude.model);
+  config.vertexClaude.model = expandVertexClaudeModel(config.vertexClaude.model);
+
   return config;
 }
