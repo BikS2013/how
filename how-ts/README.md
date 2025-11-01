@@ -1,0 +1,389 @@
+# How-CLI (TypeScript) - Multi-Provider AI Support
+
+<h1 align="center">How-CLI-TS</h1>
+<p align="center">A Terminal-Based Assistant for Generating Shell Commands with Multiple AI Providers</p>
+
+**How-CLI-TS** is a TypeScript/Node.js terminal assistant that generates precise shell commands for any task. Now with support for **multiple AI providers**: Google Gemini, OpenAI, Azure OpenAI, Anthropic Claude, and Vertex AI Claude.
+
+---
+
+## ✨ Features
+
+- 🤖 **Multiple AI Providers**: Choose from Gemini, OpenAI, Azure OpenAI, Claude, or Vertex Claude
+- 🎯 Generate **exact shell commands** based on your current context
+- 📍 Context-aware: considers files, git repos, shell type, and installed tools
+- 📝 **Command history** logging
+- 📋 Clipboard support: auto-copy generated commands
+- ⌨️ Typewriter effect (optional)
+- ⚙️ Flexible configuration: CLI flags, environment variables, or config file
+- 🛡️ **Type-safe** implementation with full TypeScript support
+- 🔄 Retry logic with exponential backoff
+- ⚡ Timeout handling and error recovery
+
+---
+
+## 🚀 Supported AI Providers
+
+| Provider | Models | Configuration |
+|----------|--------|---------------|
+| **Google Gemini** | gemini-2.5-flash-lite, etc. | `GOOGLE_API_KEY` |
+| **OpenAI** | gpt-4o, gpt-4o-mini, gpt-3.5-turbo | `OPENAI_API_KEY` |
+| **Azure OpenAI** | gpt-4, gpt-3.5-turbo (via Azure) | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
+| **Anthropic Claude** | claude-3-5-sonnet, etc. | `ANTHROPIC_API_KEY` |
+| **Vertex AI Claude** | claude via Google Vertex AI | `VERTEX_PROJECT_ID`, `VERTEX_LOCATION` |
+
+---
+
+## 📦 Installation
+
+### From Source
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd how-ts
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Link globally (optional)
+npm link
+```
+
+### Development Mode
+
+```bash
+# Run without building
+npm run dev -- <your question>
+```
+
+---
+
+## 🎯 Quick Start
+
+### Basic Usage
+
+```bash
+# Using default provider (Gemini)
+node dist/index.js how to list all files
+
+# Using OpenAI
+node dist/index.js --provider openai how to create a git repository
+
+# Using Claude with specific model
+node dist/index.js --provider claude --model claude-3-5-sonnet-20241022 how to check disk usage
+
+# Using Azure OpenAI
+node dist/index.js --provider azure how to find large files
+```
+
+### Global Installation
+
+If you've linked the package globally:
+
+```bash
+how-ts how to compress a directory
+how-ts --provider openai how to search for text in files
+```
+
+---
+
+## ⚙️ Configuration
+
+### Configuration Priority (highest to lowest)
+
+1. **CLI Arguments** (`--provider`, `--model`)
+2. **Environment Variables**
+3. **Config File** (`~/.how-cli/config.json`)
+4. **Defaults**
+
+### Environment Variables
+
+#### Provider Selection
+```bash
+export AI_PROVIDER=openai  # gemini, openai, azure, claude, vertex-claude
+```
+
+#### Google Gemini
+```bash
+export GOOGLE_API_KEY=your-key-here
+export GEMINI_MODEL=models/gemini-2.5-flash-lite  # optional
+```
+
+#### OpenAI
+```bash
+export OPENAI_API_KEY=sk-...
+export OPENAI_MODEL=gpt-4o-mini  # optional
+export OPENAI_ORGANIZATION=org-...  # optional
+```
+
+#### Azure OpenAI
+```bash
+export AZURE_OPENAI_API_KEY=your-key
+export AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+export AZURE_OPENAI_API_VERSION=2024-02-15-preview  # optional
+export AZURE_OPENAI_DEPLOYMENT=gpt-4  # deployment name
+```
+
+#### Anthropic Claude
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export CLAUDE_MODEL=claude-3-5-sonnet-20241022  # optional
+```
+
+#### Vertex AI Claude
+```bash
+export VERTEX_PROJECT_ID=your-gcp-project
+export VERTEX_LOCATION=us-east5  # optional
+export VERTEX_CLAUDE_MODEL=claude-3-5-sonnet@20241022  # optional
+```
+
+### Config File
+
+Create `~/.how-cli/config.json`:
+
+```json
+{
+  "provider": "openai",
+  "openai": {
+    "apiKey": "sk-...",
+    "model": "gpt-4o-mini"
+  },
+  "claude": {
+    "apiKey": "sk-ant-...",
+    "model": "claude-3-5-sonnet-20241022"
+  },
+  "azure": {
+    "apiKey": "...",
+    "endpoint": "https://...",
+    "deployment": "gpt-4"
+  }
+}
+```
+
+---
+
+## 🎮 CLI Options
+
+```bash
+Options:
+  --provider <name>    AI provider: gemini, openai, azure, claude, vertex-claude
+  --model <name>       Model name for the selected provider
+  --config <path>      Path to config file (default: ~/.how-cli/config.json)
+  --silent             Suppress spinner and typewriter effect
+  --type               Show output with typewriter effect
+  --history            Show command/question history
+  --help               Show this help message and exit
+```
+
+---
+
+## 📖 Examples
+
+### Different Providers
+
+```bash
+# Google Gemini (default)
+how-ts how to create a Python virtual environment
+> python -m venv venv
+
+# OpenAI GPT-4
+how-ts --provider openai how to find all .js files
+> find . -name "*.js"
+
+# Anthropic Claude
+how-ts --provider claude how to count lines in a file
+> wc -l filename
+
+# Azure OpenAI
+how-ts --provider azure how to compress a folder
+> tar -czf folder.tar.gz folder/
+
+# Vertex AI Claude
+how-ts --provider vertex-claude how to check memory usage
+> free -h
+```
+
+### Custom Models
+
+```bash
+# Specific OpenAI model
+how-ts --provider openai --model gpt-4o how to optimize this script
+
+# Specific Claude model
+how-ts --provider claude --model claude-3-5-sonnet-20241022 how to debug
+
+# Azure deployment
+how-ts --provider azure --model my-gpt4-deployment how to deploy
+```
+
+### With Options
+
+```bash
+# Silent mode (no spinner)
+how-ts --silent how to list files
+
+# Typewriter effect
+how-ts --type how to create directory
+
+# Custom config file
+how-ts --config ./my-config.json how to search
+```
+
+---
+
+## 🏗️ Project Structure
+
+```
+how-ts/
+├── src/
+│   ├── config/
+│   │   ├── index.ts          # Configuration constants & env vars
+│   │   └── config-loader.ts  # Config file loading & resolution
+│   ├── providers/
+│   │   ├── base.ts           # Provider interface
+│   │   ├── gemini.ts         # Google Gemini provider
+│   │   ├── openai.ts         # OpenAI provider
+│   │   ├── azure-openai.ts   # Azure OpenAI provider
+│   │   ├── claude.ts         # Anthropic Claude provider
+│   │   ├── vertex-claude.ts  # Vertex AI Claude provider
+│   │   ├── factory.ts        # Provider factory
+│   │   └── index.ts          # Provider exports
+│   ├── utils/
+│   │   ├── display.ts        # Display utilities
+│   │   ├── history.ts        # History management
+│   │   ├── system.ts         # System introspection
+│   │   └── text.ts           # Text processing
+│   ├── errors/
+│   │   └── index.ts          # Custom error classes
+│   └── index.ts              # Main CLI entry point
+├── dist/                     # Compiled JavaScript
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+---
+
+## 🔧 Development
+
+### Build
+
+```bash
+npm run build
+```
+
+### Clean Build
+
+```bash
+npm run clean
+npm run build
+```
+
+### Run in Development
+
+```bash
+npm run dev -- --provider openai how to list files
+```
+
+---
+
+## 📊 Tech Stack
+
+### Core Dependencies
+- `@google/generative-ai` - Google Gemini API
+- `openai` - OpenAI & Azure OpenAI
+- `@anthropic-ai/sdk` - Anthropic Claude API
+- `@google-cloud/vertexai` - Vertex AI
+- `clipboardy` - Clipboard support
+
+### Development
+- `typescript` - Type-safe development
+- `ts-node` - Development execution
+- `@types/node` - Node.js types
+
+---
+
+## 🎯 Provider-Specific Notes
+
+### Google Gemini
+- Free tier available
+- Fast response times
+- Good for general commands
+
+### OpenAI
+- Requires API key (paid)
+- Excellent command generation
+- Supports latest GPT models
+
+### Azure OpenAI
+- Enterprise-grade
+- Requires Azure subscription
+- Uses deployment names instead of model names
+
+### Anthropic Claude
+- High-quality responses
+- Good reasoning capabilities
+- Requires API key
+
+### Vertex AI Claude
+- Claude via Google Cloud
+- Requires GCP project
+- Region-specific availability
+
+---
+
+## 🐛 Troubleshooting
+
+### Missing API Key
+
+```
+❌ Configuration Error: Google Gemini API key is required
+```
+**Solution**: Set the appropriate environment variable or use `--config` flag
+
+### Provider Not Available
+
+```
+❌ Provider Error: Unknown provider: typo
+```
+**Solution**: Check provider name. Supported: `gemini`, `openai`, `azure`, `claude`, `vertex-claude`
+
+### Azure Endpoint Issues
+
+```
+❌ Configuration Error: Azure OpenAI endpoint is required
+```
+**Solution**: Set all required Azure variables: `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`
+
+### Vertex AI Auth
+
+```
+❌ Authentication or permission error
+```
+**Solution**: Ensure you're authenticated with Google Cloud: `gcloud auth application-default login`
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.
+
+---
+
+## 👤 Author
+
+Original Python version by **Adem Kouki**
+TypeScript port with multi-provider support: November 2025
+
+---
+
+## 🙏 Acknowledgments
+
+- Google Gemini for AI capabilities
+- OpenAI for GPT models
+- Anthropic for Claude
+- All contributors to the AI provider SDKs
