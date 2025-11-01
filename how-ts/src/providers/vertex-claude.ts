@@ -70,6 +70,16 @@ export class VertexClaudeProvider implements BaseProvider {
     return modelMap[invalidModel] || null;
   }
 
+  /**
+   * Prewarm Google ADC by fetching an access token ahead of the first API call.
+   */
+  async prewarm(): Promise<void> {
+    this.validateConfig();
+    const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+    const authClient = await auth.getClient();
+    await authClient.getAccessToken();
+  }
+
   async generateResponse(prompt: string, silent: boolean = false, verbose: boolean = false): Promise<string> {
     this.validateConfig();
 

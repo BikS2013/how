@@ -32,6 +32,7 @@ async function main(): Promise<void> {
     console.log('  --type               Show output with typewriter effect');
     console.log('  --verbose            Print the complete request sent to the model');
     console.log('  --history            Show command/question history');
+    console.log('  --prewarm            Pre-fetch auth for Vertex Claude to reduce first-call latency');
     console.log('  --help               Show this help message and exit');
     console.log('\nEnvironment Variables:');
     console.log('  AI_PROVIDER                 - Set default provider');
@@ -58,6 +59,7 @@ async function main(): Promise<void> {
   const silent = args.includes('--silent');
   const typeEffect = args.includes('--type') && !silent;
   const verbose = args.includes('--verbose');
+  const prewarm = args.includes('--prewarm');
 
   // Handle --history
   if (args.includes('--history')) {
@@ -152,6 +154,21 @@ async function main(): Promise<void> {
   } catch (error) {
     console.error(`❌ Configuration Error: ${error instanceof Error ? error.message : error}`);
     process.exit(1);
+  }
+
+  // Optional prewarm step (fetch ADC token early for Vertex Claude)
+  if (prewarm && config.provider === 'vertex-claude') {
+    if (verbose) {
+      console.log('Prewarming Vertex AI auth...');
+    }
+    try {
+      const maybePrewarm = (provider as any).prewarm;
+      if (typeof maybePrewarm === 'function') {
+        await maybePrewarm.call(provider);
+      }
+    } catch (error) {
+      console.warn(`Prewarm failed: ${error instanceof Error ? error.message : error}`);
+    }
   }
 
   // Gather system context
